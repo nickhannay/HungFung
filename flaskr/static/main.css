@@ -1,0 +1,98 @@
+
+body {
+  background:#fff8ea;
+  color: #666363;
+  margin-top: 5rem;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #000000;
+}
+
+
+.site-header .navbar-nav .nav-link {
+  color: #fff8ea;
+}
+
+.site-header .navbar-nav .nav-link:hover {
+  color: #969289;
+}
+
+.site-header .navbar-nav .nav-link.active {
+  font-weight: 600;
+}
+
+.content-section {
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 3px;
+  margin-bottom: 20px;
+}
+
+.article-title {
+  color: #47443d;
+}
+
+a.article-title:hover {
+  color: #4c5258;
+  text-decoration: none;
+}
+
+.article-metadata {
+  padding-bottom: 1px;
+  margin-bottom: 4px;
+  
+}
+
+.article-metadata a:hover {
+  color: #333;
+  text-decoration: none;
+}
+
+.article-svg {
+  width: 25px;
+  height: 25px;
+  vertical-align: middle;
+}
+
+.account-img {
+  height: 125px;
+  width: 125px;
+  margin-right: 20px;
+  margin-bottom: 16px;
+}
+
+.account-heading {
+  font-size: 2.5rem;
+}
+
+.card{
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  width: 80%;
+  padding: 1px 5px;
+  float: left;
+  background-color: white;
+}
+
+.col-sm-4{
+  display: inline-block;
+  background-color: #fff8ea;
+  left: auto;
+}
+
+.row{
+  background-color: #fff8ea;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  margin-left: 0;
+  margin-top: 10px;
+  
+}
+
+.col-md-3{
+  display: inline-block;
+  background-color: #fff8ea;
+  left: auto;
+}
+

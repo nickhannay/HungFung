@@ -1,0 +1,45 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<!-- Page for filtered pay stubs -->
+<table class="table">
+        <thead>
+        <tr>
+                <th scope="col">Employee Name</th>
+                <th scope="col">Cheque Number</th>
+                <th scope="col">Date</th>
+                <th scope="col">Gross Pay</th>
+                <th scope="col">CPP</th>
+                <th scope="col">EI</th>
+                <th scope="col">Federal Tax</th>
+                <th scope="col">Provincial Tax</th>
+                <th scope="col">YTDGP</th>
+                <th scope="col">YTD CPP</th>
+                <th scope="col">YTD EI</th>
+                <th scope="col">YTD NET Earinings</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for stub in stubs %}
+                <tr>    
+                        <td>{{stub.Fname}} {{stub.Lname}}</td>
+                        <td>{{stub.ChequeNumber}}</td>
+                        <td>{{stub.PayrollDate}}</td>
+                        <td>{{stub.GrossPay}}</td>
+                        <td>{{stub.CPP}}</td>
+                        <td>{{stub.EI}}</td>
+                        <td>{{stub.FederalTax}}</td>
+                        <td>{{stub.ProvincialTax}}</td>
+                        <td>{{stub.YTDGP}}</td>
+                        <td>{{stub.YTDCPP}}</td>
+                        <td>{{stub.YTDEI}}</td>
+                        <td>{{stub.YTDNET}}</td>
+                        
+                </tr>
+                
+        {% endfor %}
+        </tbody>
+</table>
+
+
+{% endblock content %}
