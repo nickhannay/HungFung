@@ -1,7 +1,7 @@
 import os
 import sqlite3
 from datetime import datetime, date
-
+import sys
 
 from flask import Flask, render_template, url_for, flash, redirect, request
 from forms import NewEmployeeForm, update_employee_info_form, RemoveEmployeeForm, UpdateEmployeeFilloutFrom ,PayrollForm, ContactForm, RemoveContactForm, Add_shift_form, get_shifts_form, GeneratePayStub
@@ -53,6 +53,8 @@ def create_app(test_config=None):
 
         @app.route('/')
         def index():
+                
+                print (sys.path)
                 return render_template('index.html')
 
 

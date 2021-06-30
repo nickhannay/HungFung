@@ -35,7 +35,6 @@ $env:VIRTUAL_ENV = $VIRTUAL_ENV
 
 New-Variable -Scope global -Name _OLD_VIRTUAL_PATH -Value $env:PATH
 
-$env:PATH = "$env:VIRTUAL_ENV/bin:" + $env:PATH
 $env:FLASK_APP = "flaskr"
 $env:FLASK_ENV = "development"
 if (!$env:VIRTUAL_ENV_DISABLE_PROMPT) {
