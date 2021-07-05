@@ -2,6 +2,6 @@ __pycache__/
 .vs/
 flaskr/__pycache__/
 instance/
-geckodriver.*
+geckodriver.log
 
 

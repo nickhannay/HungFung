@@ -2,6 +2,8 @@ import os
 import sqlite3
 from datetime import datetime, date
 import sys
+import secrets
+
 
 from flask import Flask, render_template, url_for, flash, redirect, request
 from forms import NewEmployeeForm, update_employee_info_form, RemoveEmployeeForm, UpdateEmployeeFilloutFrom ,PayrollForm, ContactForm, RemoveContactForm, Add_shift_form, get_shifts_form, GeneratePayStub
@@ -25,7 +27,7 @@ def create_app(test_config=None):
         # create and configure the app
         app = Flask(__name__, instance_relative_config=True)
         app.config.from_mapping(
-                SECRET_KEY='cmpt354',
+                SECRET_KEY = secrets.token_urlsafe(16),
                 DATABASE=os.path.join(app.instance_path, 'flaskr.sqlite'),
         )
 
@@ -48,9 +50,6 @@ def create_app(test_config=None):
         app.register_blueprint(payroll_pages)  # payroll.py
      
         
-
-
-
         @app.route('/')
         def index():
                 
