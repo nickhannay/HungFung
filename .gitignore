@@ -3,5 +3,5 @@ __pycache__/
 flaskr/__pycache__/
 instance/
 geckodriver.log
-
+customEnv/
 
