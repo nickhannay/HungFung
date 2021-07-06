@@ -44,7 +44,7 @@ def create_app(test_config=None):
         except OSError:
                 pass
         
-        
+        # define shared modules 
         app.register_blueprint(shift_pages)    # shifts.py
         app.register_blueprint(employee_pages) # employees.py
         app.register_blueprint(payroll_pages)  # payroll.py
