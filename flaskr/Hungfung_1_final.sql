@@ -63,13 +63,13 @@ CREATE TABLE Payroll(
     );
 
 CREATE TABLE Shift(
-	ID char(10) NOT NULL,
-    ShiftID char(10) NOT NULL,
-    StartTime time NOT NULL,
-    EndTime time NOT NULL,
-    DateofShift date NOT NULL,
-    RoundedStartTime time NOT NULL,
-    RoundedEndTime time NOT NULL,
+	ID CHAR(10) NOT NULL,
+    ShiftID CHAR(10) NOT NULL,
+    StartTime TIME NOT NULL,
+    EndTime TIME NOT NULL,
+    DateofShift DATE NOT NULL,
+    RoundedStartTime TIME NOT NULL,
+    RoundedEndTime TIME NOT NULL,
     PRIMARY KEY (ShiftID),
     FOREIGN KEY (ID) REFERENCES Employee(EmployeeID)
     ON DELETE CASCADE
@@ -121,15 +121,16 @@ VALUES ('(778) 789-5645', 0001),
 	   ('(778) 236-1290', 0005);
 
 
-INSERT INTO Shift(ID, ShiftID, StartTime, EndTime, DateofShift)
-VALUES(0003,100,12,18,'2021-01-01'),
-      (0003,101,11,15,'2021-02-15'),
-      (0003,102,9,14,'2021-04-02'),
-      (0003,103,12,16,'2021-05-24'),
-      (0003,105,12,16,'2021-07-01'),
-      (0003,106,12,18,'2021-08-02'),
-      (0003,104,12,18,'2021-09-06'),
-      (0003,107,12,18,'2021-10-11'),
-      (0003,108,12,18,'2021-11-11'),
-      (0003,109,12,18,'2021-12-25');
+INSERT INTO Shift(ID, ShiftID, StartTime, EndTime, DateofShift, 
+                  RoundedStartTime, RoundedEndTime)
+VALUES(0003,100,'16:30:32','20:25:46','2021-01-01', '16:30:00','20:30:00'),
+      (0003,101,'16:30:32','20:25:46','2021-01-01', '16:30:00','20:30:00'),
+      (0003,102,'16:30:32','20:25:46','2021-01-03', '16:30:00','20:30:00'),
+      (0003,103,'16:30:32','20:25:46','2021-01-05', '16:30:00','20:30:00'),
+      (0003,104,'16:30:32','20:25:46','2021-01-06', '16:30:00','20:30:00'),
+      (0003,105,'16:30:32','20:25:46','2021-01-07', '16:30:00','20:30:00'),
+      (0003,106,'16:30:32','20:25:46','2021-01-10', '16:30:00','20:30:00'),
+      (0003,107,'16:30:32','20:25:46','2021-01-12', '16:30:00','20:30:00'),
+      (0003,108,'16:30:32','20:25:46','2021-01-19', '16:30:00','20:30:00'),
+      (0003,109,'16:30:32','20:25:46','2021-01-24', '16:30:00','20:30:00');
 
