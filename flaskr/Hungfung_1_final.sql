@@ -6,7 +6,7 @@ CREATE TABLE Employee(
     SIN int(9) NOT NULL,
     DateofBirth DATE NOT NULL,
     DateofHire DATE NOT NULL,
-    Fname CHARACTER(100) NOT NULL,
+    Fname CHARACTER(100) NOT NULL, 
     Mname CHARACTER(100) ,
     Lname CHARACTER(100) NOT NULL,
     Address CHARACTER(100) NOT NULL,
@@ -63,6 +63,8 @@ CREATE TABLE Shift(
     StartTime time NOT NULL,
     EndTime time NOT NULL,
     DateofShift date NOT NULL,
+    RoundedStartTime time NOT NULL,
+    RoundedEndTime time NOT NULL,
     PRIMARY KEY (ShiftID),
     FOREIGN KEY (ID) REFERENCES Employee(EmployeeID)
     ON DELETE CASCADE
