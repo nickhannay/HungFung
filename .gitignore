@@ -1,7 +1,6 @@
 __pycache__/
 .vs/
 flaskr/__pycache__/
-instance/
 geckodriver.log
 customEnv/
-
+Data.xlsx
