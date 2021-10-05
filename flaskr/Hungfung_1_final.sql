@@ -70,6 +70,9 @@ CREATE TABLE Shift(
     DateofShift DATE NOT NULL,
     RoundedStartTime TIME NOT NULL,
     RoundedEndTime TIME NOT NULL,
+    HoursWBreak DECIMAL (4,2) ,
+    HoursWOBreak DECIMAL (4,2),
+    OT DECIMAL (4,2),
     PRIMARY KEY (ShiftID),
     FOREIGN KEY (ID) REFERENCES Employee(EmployeeID)
     ON DELETE CASCADE
