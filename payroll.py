@@ -30,74 +30,98 @@ def report():
 @payroll_pages.route('/report/payroll', methods=['GET', 'POST'])
 def payroll():
     global TODAYS_DATE
-    form = PayrollForm()
+
+    if (TODAYS_DATE[-2:] == '15'):
+        # Process only operations employees on the 15th
+        generate_all = False
+    else:
+        generate_all = True
+    
     conn = sqlite3.connect("instance/flaskr.sqlite")
     conn.row_factory = dict_factory
     cur = conn.cursor()
     cur.execute("PRAGMA foreign_keys=on")
-    # Populate drop down dynamically
-    cur.execute(''' SELECT EmployeeID, Fname, Lname FROM Employee''')
-    employees = cur.fetchall()
-    employees_list=[(employee['Fname'] + " " + employee['Lname']) for employee in employees]
 
-    # drop down defaults to blank
-    employees_list.insert(0,"")
-    form.employee_filter.choices = employees_list
-    generate_pay_stub_form = GeneratePayStub()
-    generate_pay_stub_form.employee_filter_pay_stub.choices = employees_list
+    # seperate operations and office employees for processing
+    cur.execute(''' SELECT E.*, O.WagePerHour FROM Employee E, Operations O
+                    WHERE E.ID = O.ID''')
+    operations_employees = cur.fetchall()
+    cur.execute(''' SELECT E.*, O.Salary FROM Employee E, Office O
+                    WHERE E.ID = O.ID''')
+    office_employees = cur.fetchall()
 
-    if generate_pay_stub_form.validate_on_submit():
-        fname = generate_pay_stub_form.employee_filter_pay_stub.data.split(" ")[0]
-        lname = generate_pay_stub_form.employee_filter_pay_stub.data.split(" ")[1]
-        employee_id = getEmployeeID(fname,lname)
+    employees_list=[(employee['Fname'] + " " + employee['Lname']) for employee in office_employees+operations_employees]
+   
+    form_generate_stubs = GeneratePayStub()
+    form_display_stubs = PayrollForm()
+    form_display_stubs.employee_filter.choices = [" "] + employees_list
+    form_generate_stubs.employee_filter_pay_stub.choices = ["ALL"] + employees_list
 
-        department, pay = get_department_and_pay_from_employee_id(employee_id)          # pay can be salary or wage
-        start = generate_pay_stub_form.start_date.data
-        end = generate_pay_stub_form.end_date.data
-        num_days = abs((end - start).days)
+    if form_generate_stubs.validate_on_submit():
+        if (form_display_stubs.employee_filter.data == "ALL"):
+            # Generate all possible paystubs
 
-        full_name = fname+' '+lname
+            for employee in operations_employees:
+                # Generate stubs for operations employees
+                employee_id = employee['ID']
+                wage = employee['WagePerHour']
+                query = '''SELECT PayrollDate FROM Payroll
+                        ORDER BY PayrollDate desc '''
+                cur.execute(query)
 
-        if department == 'office':
-            total_pay = ((pay/12)/30)*num_days                                
-        elif department == 'operations':
-            total_hours_worked = get_total_hours_from_shifts(employee_id, start, end)
-            total_pay = total_hours_worked*pay
-        
-        new_cheque_number_query = '''Select MAX(ChequeNumber) From Payroll'''
-        cur.execute(new_cheque_number_query)
-        new_cheque_number = cur.fetchall()
-        
+                last_period = cur.fetchone()
+                if (last_period is None):
+                    last_period = '0000-01-01'
+                else:
+                    last_period = last_period['PayrollDate']
 
-        if (new_cheque_number[0]['MAX(ChequeNumber)'] is None):
-            new_cheque_number = 10000
+                print(f'last period start date {last_period}')
+                cur.execute('''SELECT date(?, '+1 day') as date''',[last_period])
+                last_period = cur.fetchone()['date']
+                print(f'last period start date +1 day {last_period}')
+
+                grossPay = getPeriodIncome(employee_id, wage, last_period, TODAYS_DATE, cur)
+                print(grossPay)
+                full_name = getName(employee_id, cur)
+                print(f'{full_name} gross income for period ({TODAYS_DATE}) : {grossPay}')
+
+                '''
+                cur.execute("Select MAX(ChequeNumber) From Payroll")
+                new_cheque_number = cur.fetchall()
+                if (new_cheque_number[0]['MAX(ChequeNumber)'] is None):
+                    new_cheque_number = 0000000
+                else:
+                    new_cheque_number = int(new_cheque_number[0]['MAX(ChequeNumber)'])+1
+                '''
+            if (generate_all):
+                # Genrate stubs for office employees aswell
+                for employee in office_employees:
+                    employee_id = employee['ID']
+                    salary = employee['Salary']
+                    grossPay = salary/12
+                    full_name = getName(employee_id, cur)
+                    print(f'{full_name} gross income for period ({TODAYS_DATE}) : {grossPay}')
         else:
-            new_cheque_number = int(new_cheque_number[0]['MAX(ChequeNumber)'])+1
+            # generate pay stub for the specified employee
+            print("Generate specific stub")
+    
+        flash(f'Pay stubs generated for Pay Period: {TODAYS_DATE}', 'success')
 
-        insert_query = '''INSERT INTO Payroll VALUES (?,?,?,?,?,?,?,?,?,?,?,?)'''
-
-        data_row = (new_cheque_number, TODAYS_DATE, total_pay, total_pay*0.02, total_pay*0.02, total_pay*0.12, total_pay*0.12, 1, 2, 3, 4, employee_id)
-        cur.execute(insert_query, data_row)
-
-        conn.commit()
-        cur.close()
-        flash('New Pay Stub Generated', 'success')
-
-    elif form.validate_on_submit():
-        # display pay stubs
-        fname = form.employee_filter.data.split(" ")[0]
-        lname = form.employee_filter.data.split(" ")[1]
-        ID = getEmployeeID(fname, lname)
+    elif form_display_stubs.validate_on_submit():
+        # Display pay stubs
+        fname = form_display_stubs.employee_filter.data.split(" ")[0]
+        lname = form_display_stubs.employee_filter.data.split(" ")[1]
+        ID = getEmployeeID(fname, lname, cur)
 
         # get pay stubs
         query = '''SELECT * 
                 FROM Employee E, Payroll P
-                WHERE P.ID = ? AND E.EmployeeID = P.ID AND P.PayrollDate between ? and ? 
+                WHERE P.ID = ? AND E.ID = P.ID AND P.PayrollDate between ? and ? 
                 Order by P.PayrollDate desc
                 LIMIT ?'''
         
         # check which filter is selected
-        if (form.payroll_date_range.data == "YTD"):
+        if (form_display_stubs.payroll_date_range.data == "YTD"):
             #Show pay stubs from start of year
             start = TODAYS_DATE[0:4] + "-01-01"
             end = TODAYS_DATE
@@ -115,7 +139,7 @@ def payroll():
         cur.close()
 
         return render_template('payroll_data.html', stubs = stubs) 
-    return render_template('payroll.html', form = form, generate_pay_stub_form = generate_pay_stub_form)
+    return render_template('payroll.html', form = form_display_stubs, generate_pay_stub_form = form_generate_stubs)
 
 def navigateTaxSite(website):
     conn = sqlite3.connect("instance/flaskr.sqlite")
@@ -133,7 +157,7 @@ def navigateTaxSite(website):
     driver.find_element_by_id('welcome_button_next').click()
     
     #calculate info for each employee 
-    c.execute("SELECT Fname, Mname, Lname, EmployeeID FROM Employee")
+    c.execute("SELECT Fname, Mname, Lname, ID FROM Employee")
     employees = c.fetchall()
     for e in employees:
         # PAGE 1
@@ -159,7 +183,7 @@ def navigateTaxSite(website):
 
         # PAGE 2
         # gross income per period
-        ammount = getPeriodIncome(e['EmployeeID'], c)
+        ammount = getPeriodIncome(e['ID'], c)
         gross_income = driver.find_element_by_id("incomeAmount")
         gross_income.clear()
         gross_income.send_keys("{:.2f}".format(ammount))

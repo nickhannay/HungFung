@@ -39,7 +39,7 @@ def add_new_employee():
 
         #use next available ID
         c.execute('''
-                SELECT MAX(EmployeeID)
+                SELECT MAX(ID)
                 FROM Employee
                 '''
                 )
@@ -105,7 +105,7 @@ def update_employee_info():
     cur = conn.cursor()
     cur.execute("PRAGMA foreign_keys=on")
     # Populate drop down dynamically
-    cur.execute(''' SELECT EmployeeID, Fname, Lname FROM Employee''')
+    cur.execute(''' SELECT ID, Fname, Lname FROM Employee''')
     employees = cur.fetchall()
     employees_list=[(employee['Fname'] + " " + employee['Lname']) for employee in employees]
     employees_list.insert(0,"")
@@ -138,18 +138,11 @@ def update_fill_out(fname , lname):
     cur.execute("PRAGMA foreign_keys=on")
 
     # get the ID for the selected employee
-    query = '''
-            SELECT E.EmployeeID
-            FROM Employee E
-            WHERE Fname = ? AND Lname = ? 
-            '''
-    cur.execute(query,(fname,lname))
-    tmp = cur.fetchall()
-    ID = tmp [0]['EmployeeID']
+    ID = getEmployeeID(fname, lname, cur)
   
     # get the employee's info 
-    query = '''SELECT *, PhoneNumber FROM Employee, Phone 
-                WHERE EmployeeID = ? AND Phone.ID = Employee.EmployeeID'''
+    query = '''SELECT E.*, PhoneNumber FROM Employee E, Phone 
+                WHERE E.ID = ? AND Phone.ID = E.ID'''
     cur.execute(query , (ID))
     current_vals = cur.fetchall()
 
@@ -189,17 +182,17 @@ def update_fill_out(fname , lname):
         # check which fields have changed and update them
         
         if (len(update_form.employee_SIN.data) != 0):
-            cur.execute("Update Employee SET SIN = ? WHERE EmployeeID = ?" ,( update_form.employee_SIN.data, ID))
+            cur.execute("Update Employee SET SIN = ? WHERE ID = ?" ,( update_form.employee_SIN.data, ID))
         if (len(update_form.employee_date_of_birth.data) != 0):
-            cur.execute("Update Employee SET DateofBirth = ? WHERE EmployeeID = ?" , (update_form.employee_date_of_birth.data , ID))
+            cur.execute("Update Employee SET DateofBirth = ? WHERE ID = ?" , (update_form.employee_date_of_birth.data , ID))
         if (len(update_form.employee_first_name.data) != 0):
-            cur.execute("Update Employee SET Fname = ? WHERE EmployeeID = ?" , (update_form.employee_first_name.data, ID))
+            cur.execute("Update Employee SET Fname = ? WHERE ID = ?" , (update_form.employee_first_name.data, ID))
         if (len(update_form.employee_last_name.data) != 0):
-            cur.execute("Update Employee SET Lname = ? WHERE EmployeeID = ?" ,( update_form.employee_last_name.data, ID))
+            cur.execute("Update Employee SET Lname = ? WHERE ID = ?" ,( update_form.employee_last_name.data, ID))
         if (len(update_form.employee_middle_name.data) != 0):
-            cur.execute("Update Employee SET Mname = ? WHERE EmployeeID = ?" , (update_form.employee_middle_name.data, ID))
+            cur.execute("Update Employee SET Mname = ? WHERE ID = ?" , (update_form.employee_middle_name.data, ID))
         if (len(update_form.employee_Address.data) != 0):
-            cur.execute("Update Employee SET Address = ? WHERE EmployeeID = ?" , (update_form.employee_Address.data, ID))
+            cur.execute("Update Employee SET Address = ? WHERE ID = ?" , (update_form.employee_Address.data, ID))
         if (len(update_form.employee_phone.data) != 0):
             # format phone number before adding to DB
             tmp = update_form.employee_phone.data
@@ -259,11 +252,11 @@ def removeEmployee():
     cur.execute('''
                     SELECT E1.*
                     FROM Operations O, Employee E1
-                    WHERE O.ID = E1.EmployeeID
+                    WHERE O.ID = E1.ID
                     UNION
                     SELECT E2.*
                     FROM Office Of, Employee E2
-                    WHERE Of.ID = E2.EmployeeID
+                    WHERE Of.ID = E2.ID
                     ORDER BY E2.Lname ASC
 
             ''')
@@ -273,7 +266,7 @@ def removeEmployee():
         selected_employees = request.form.getlist('chkb')
         for e in selected_employees:
                 #remove selected employees 
-                query = "DELETE FROM Employee WHERE EmployeeID = ?"
+                query = "DELETE FROM Employee WHERE ID = ?"
                 print("remove ID: " +str(e) +" from Employee")
                 cur.execute(query,(e))
 
@@ -294,7 +287,7 @@ def employeeinfo():
     cur.execute('''
             SELECT E.*, P.PhoneNumber, O.WagePerHour
             FROM Operations O, Employee E, Phone P
-            WHERE O.ID = E.EmployeeID AND P.ID = E.EmployeeID AND O.ID = P.ID
+            WHERE O.ID = E.ID AND P.ID = E.ID AND O.ID = P.ID
             ORDER BY UPPER(E.Lname) ASC
                     ''')
     operations = cur.fetchall()
@@ -303,7 +296,7 @@ def employeeinfo():
     cur.execute('''
             SELECT E.*, P.PhoneNumber, O.Salary  
             FROM Office O, Employee E, Phone P
-            WHERE O.ID = E.EmployeeID AND P.ID = E.EmployeeID AND O.ID = P.ID
+            WHERE O.ID = E.ID AND P.ID = E.ID AND O.ID = P.ID
             ORDER BY UPPER(E.Lname) ASC
                     ''')
     offices = cur.fetchall()

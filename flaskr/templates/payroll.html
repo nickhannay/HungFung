@@ -52,7 +52,6 @@
         </fieldset>
 
         <div class="form-row">
-
                 <!-- Employee Dropdown  -->
                 <div class="form-group col-md-3">
                         {{ generate_pay_stub_form.employee_filter_pay_stub.label(class="form-control-label") }}
@@ -67,41 +66,15 @@
                         {% else %}
                         {{ generate_pay_stub_form.employee_filter_pay_stub(class="form-control form-control-sm") }}
                         {% endif %}
-                </div>
-
-                <div class="form-group col-md-3">
-                        {{ generate_pay_stub_form.start_date.label(class="form-control-label") }}
-                  
-                        {% if generate_pay_stub_form.start_date.errors %}
-                        {{ generate_pay_stub_form.start_date(class="form-control form-control-sm is-invalid") }} 
-                        <div class="invalid-feedback">
-                          {% for error in generate_pay_stub_form.start_date.errors %}
-                          <span>{{ error }}</span>
-                          {% endfor %}
-                        </div>
-                        {% else %}
-                        {{ generate_pay_stub_form.start_date(class="form-control form-control-sm") }}
-                        {% endif %}
-                </div>
-
-                <div class="form-group col-md-3">
-                        {{ generate_pay_stub_form.end_date.label(class="form-control-label") }}
-                  
-                        {% if generate_pay_stub_form.end_date.errors %}
-                        {{ generate_pay_stub_form.end_date(class="form-control form-control-sm is-invalid") }} 
-                        <div class="invalid-feedback">
-                          {% for error in generate_pay_stub_form.end_date.errors %}
-                          <span>{{ error }}</span>
-                          {% endfor %}
-                        </div>
-                        {% else %}
-                        {{ generate_pay_stub_form.end_date(class="form-control form-control-sm") }}
-                        {% endif %}
-                </div>
+                </div> 
         </div>
+        
         <div class="form-group">
                 {{ generate_pay_stub_form.generate_pay_stub(class="btn btn-outline-info") }}
         </div>
+                
+        
+        
 
 </form>
 

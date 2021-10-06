@@ -31,7 +31,7 @@ def timecard():
     conn.row_factory = dict_factory
     cur = conn.cursor()
     cur.execute("PRAGMA foreign_keys=on")
-    cur.execute(''' SELECT EmployeeID, Fname, Lname FROM Employee''')
+    cur.execute(''' SELECT ID, Fname, Lname FROM Employee''')
     employees = cur.fetchall()
     employees_list=[(employee['Fname'] + " " + employee['Lname']) for employee in employees]
     employees_list.insert(0,"")
@@ -40,10 +40,10 @@ def timecard():
         employee_full_name = form.employee_filter.data
         fname = form.employee_filter.data.split(" ")[0]
         lname = form.employee_filter.data.split(" ")[1]
-        emloyee_id=getEmployeeID(fname,lname)
+        employee_id=getEmployeeID(fname,lname, cur)
 
         query ='SELECT * FROM Shift WHERE ID = ?'
-        cur.execute(query, (emloyee_id,))
+        cur.execute(query, (employee_id,))
         shifts=cur.fetchall()
         conn.commit()
         cur.close()
@@ -61,7 +61,7 @@ def add_shift():
     conn.row_factory = dict_factory
     cur = conn.cursor()
     cur.execute("PRAGMA foreign_keys=on")
-    cur.execute(''' SELECT EmployeeID, Fname, Lname FROM Employee''')
+    cur.execute(''' SELECT ID, Fname, Lname FROM Employee''')
     employees = cur.fetchall()
     employees_list=[(employee['Fname'] + " " + employee['Lname']) for employee in employees]
     employees_list.insert(0,"")
@@ -79,10 +79,10 @@ def add_shift():
         # calculating employee id from fname and lastname
         fname = form.employee_filter.data.split(" ")[0]
         lname = form.employee_filter.data.split(" ")[1]
-        emloyee_id=getEmployeeID(fname,lname)
+        employee_id=getEmployeeID(fname,lname, cur)
         # Now that we have shiftID and employeeID we can generate the new shift
         query = 'insert into Shift VALUES (?, ?, ?, ?, ?)'
-        cur.execute(query, (emloyee_id,next_shift_id_to_be_added,form.shift_start_time.data,form.sift_end_time.data,form.date_of_shift.data))
+        cur.execute(query, (employee_id,next_shift_id_to_be_added,form.shift_start_time.data,form.sift_end_time.data,form.date_of_shift.data))
         conn.commit()
         cur.close()
 

@@ -24,7 +24,7 @@
       {% for employee in employees %}
           <tr>
   
-              <td>{{employee.EmployeeID}}</td>
+              <td>{{employee.ID}}</td>
               <td>{{employee.SIN}}</td>
               <td>{{employee.DateofBirth}}</td>
               <td>{{employee.DateofHire}}</td>
@@ -32,7 +32,7 @@
               <td>{{employee.Mname}}</td>
               <td>{{employee.Lname}}</td>
               <td>{{employee.Address}}</td>          <!-- 'value' is used to detrmine which boxes were checked -->
-              <td><input type="checkbox" name="chkb" value="{{employee.EmployeeID}}"/> </td>
+              <td><input type="checkbox" name="chkb" value="{{employee.ID}}"/> </td>
           </tr>
           
       {% endfor %}

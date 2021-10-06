@@ -1,3 +1,4 @@
+import decimal
 import os
 import sqlite3
 from datetime import datetime, date
@@ -29,88 +30,34 @@ def dict_factory(cursor, row):
     return d
         
 
-def getEmployeeID(fname,lname):
-    conn = sqlite3.connect("instance/flaskr.sqlite")
-    conn.row_factory = dict_factory
-    cur = conn.cursor()
-    query = ''' SELECT EmployeeID
-                        FROM Employee
-                        WHERE Fname = ? AND Lname = ?''' 
-
+def getEmployeeID(fname,lname, cur):
+    query = ''' SELECT ID FROM Employee
+                WHERE Fname = ? AND Lname = ?''' 
     cur.execute(query,(fname,lname))
-    employee_id = cur.fetchall()[0]['EmployeeID']
-    conn.commit()
-    cur.close()
-            
+    employee_id = cur.fetchall()[0]['ID']
     return employee_id
 
-def get_department_and_pay_from_employee_id(employee_id):
-    conn = sqlite3.connect("instance/flaskr.sqlite")
-    conn.row_factory = dict_factory
-    cur = conn.cursor()
-    cur.execute("PRAGMA foreign_keys=on")
-    query = ''' SELECT *
-                FROM Employee E, Office Of
-                WHERE E.EmployeeID = ? and E.EmployeeID = Of.ID ''' 
+def getName(id , cur):
+    cur.execute('''SELECT Fname, Lname FROM Employee E WHERE E.ID = ?''', (id))
+    name = cur.fetchone()
+    full_name = name['Fname'] + " " + name['Lname']
+    return(full_name)
 
-    cur.execute(query,(employee_id))
-    records = cur.fetchall()
+def getPeriodIncome(Id, wage, start, end , cur):
+    # calculate income for period between start and end (inclusive)
+    # ammount = [regular hours * regular rate] + [OT hours * (regular_rate + regular_rate/2)]
 
-    if len(records) == 0:
-        query = ''' SELECT *
-                FROM Employee E, Operations Op
-                WHERE E.EmployeeID = ? and E.EmployeeID = Op.ID ''' 
-
-        cur.execute(query,(employee_id))
-        records = cur.fetchall()
-        department_and_pay = ('operations', records[0]['WagePerHour'])
-    else:
-        department_and_pay = ('office', records[0]['Salary'])
-
-    conn.commit()
-    cur.close()
-    return department_and_pay
-
-def get_total_hours_from_shifts(employee_id, start, end):
-    conn = sqlite3.connect("instance/flaskr.sqlite")
-    conn.row_factory = dict_factory
-    cur = conn.cursor()
-    cur.execute("PRAGMA foreign_keys=on")
-    query = ''' SELECT *
-                FROM Employee E, Shift S
-                WHERE E.EmployeeID = ? and E.EmployeeID = S.ID and S.DateofShift BETWEEN ? and ? ''' 
-
-    cur.execute(query,(employee_id, start, end))
-    records = cur.fetchall()
-
-    total_hours = 0
-    
-    for r in records:
-        total_hours += abs(r['EndTime'] - r['StartTime'])
-
-    conn.commit()
-    cur.close()
-    return total_hours
-
-
-def getPeriodIncome(Id, c):
-    # calculate income for period
-    query = '''SELECT Salary FROM Office      
-                    WHERE ID = ?'''         
-    c.execute(query, (Id)) 
-    income = c.fetchall()
-
-    print(income)
+    ammount = 0
     getcontext().prec = 2
-    if not income:
-        #employee is paid per hour
-        query = '''SELECT WagePerHour FROM Operations      
-                        WHERE ID = ?'''         
-        c.execute(query, (Id)) 
-        income = c.fetchall()
-        ammount = income[0]['WagePerHour']
-        ammount = Decimal(ammount)*Decimal(50)
-    else:
-        ammount = Decimal(income[0]['Salary'])/Decimal(24)
+    query = '''SELECT sum(S.HoursWBreak) as RegHours, sum(S.OTHours) as OTHours FROM Shift S
+               WHERE S.ID = ? AND S.DateofShift Between ? AND ?'''
+    cur.execute(query, (Id, start, end))
+    hours = cur.fetchone()
     
+    if(hours['RegHours'] is not None):
+        ammount += hours['RegHours'] * wage
+    if(hours['OTHours'] is not None):
+        ammount +=  hours['OTHours'] * (wage + (decimal(wage)/2))
+        print(ammount)
+
     return ammount

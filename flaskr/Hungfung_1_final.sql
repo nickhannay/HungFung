@@ -2,7 +2,7 @@
 PRAGMA foreign_keys=on;
 
 CREATE TABLE Employee(
-    EmployeeID char(7) NOT NULL,
+    ID char(7) NOT NULL,
     SIN int(9) NOT NULL,
     DateofBirth DATE NOT NULL,
     DateofHire DATE NOT NULL,
@@ -10,7 +10,7 @@ CREATE TABLE Employee(
     Mname CHARACTER(100) ,
     Lname CHARACTER(100) NOT NULL,
     Address CHARACTER(100) NOT NULL,
-    PRIMARY KEY (EmployeeID)
+    PRIMARY KEY (ID)
     );
    
 CREATE TABLE EmergencyContact(
@@ -19,7 +19,7 @@ CREATE TABLE EmergencyContact(
     Relation CHARACTER(100) NOT NULL,
     ID CHARACTER(7) NOT NULL,
     PRIMARY KEY (ContactName, ID),
-    FOREIGN KEY (ID) REFERENCES Employee(EmployeeID)
+    FOREIGN KEY (ID) REFERENCES Employee(ID)
     ON DELETE CASCADE
   );
     
@@ -27,7 +27,7 @@ CREATE TABLE Office(
     ID char(7) NOT NULL,
     Salary int(9) NOT NULL,
     PRIMARY KEY (ID),
-    FOREIGN KEY (ID) REFERENCES Employee(EmployeeID)
+    FOREIGN KEY (ID) REFERENCES Employee(ID)
     ON DELETE CASCADE
     );
     
@@ -35,7 +35,7 @@ CREATE TABLE Operations(
     ID char(7) NOT NULL,
     WagePerHour DECIMAL(9) NOT NULL,
     PRIMARY KEY (ID),
-    FOREIGN KEY (ID) REFERENCES Employee(EmployeeID)
+    FOREIGN KEY (ID) REFERENCES Employee(ID)
     ON DELETE CASCADE
     );
 
@@ -58,7 +58,7 @@ CREATE TABLE Payroll(
     StatHours DECIMAL (4,2),
     ID char(7) NOT NULL,
     PRIMARY KEY (ChequeNumber),
-    FOREIGN KEY (ID) REFERENCES Employee(EmployeeID)
+    FOREIGN KEY (ID) REFERENCES Employee(ID)
     ON DELETE CASCADE
     );
 
@@ -72,9 +72,9 @@ CREATE TABLE Shift(
     RoundedEndTime TIME NOT NULL,
     HoursWBreak DECIMAL (4,2) ,
     HoursWOBreak DECIMAL (4,2),
-    OT DECIMAL (4,2),
+    OTHours DECIMAL (4,2),
     PRIMARY KEY (ShiftID),
-    FOREIGN KEY (ID) REFERENCES Employee(EmployeeID)
+    FOREIGN KEY (ID) REFERENCES Employee(ID)
     ON DELETE CASCADE
     );
 
@@ -82,7 +82,7 @@ CREATE TABLE Phone(
     PhoneNumber CHAR(20) NOT NULL,
     ID char(7) NOT NULL,
     PRIMARY KEY(PhoneNumber, ID),
-    FOREIGN KEY (ID) REFERENCES Employee(EmployeeID)
+    FOREIGN KEY (ID) REFERENCES Employee(ID)
     ON DELETE CASCADE
 );
 
@@ -90,7 +90,7 @@ CREATE TABLE Phone(
 /*------------------------------------ Initial Values ------------------------------------------*/
 
 
-INSERT INTO Employee (EmployeeID, SIN, DateofBirth, DateofHire, Fname, Mname, Lname, Address)
+INSERT INTO Employee (ID, SIN, DateofBirth, DateofHire, Fname, Mname, Lname, Address)
 VALUES (0001, 897586446, '1987-01-09', '2018-04-26', 'Jack', 'Young', 'Ma', '8990 Alpha Street'),
 	   (0002, 397486256, '1987-04-28', '2010-03-23', 'Emma', 'Yye', 'Zhang', '8990 Beta Street'),
 	   (0003, 296586884, '1980-09-01', '2012-05-16', 'Alan', 'Zhu', 'Kit', '1990 Nova Street'),

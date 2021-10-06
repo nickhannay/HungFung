@@ -43,9 +43,7 @@ class PayrollForm(FlaskForm):
 
 class GeneratePayStub(FlaskForm):
     employee_filter_pay_stub = SelectField('Employee', coerce=str)
-    start_date = DateField('Start Date',format='%Y-%m-%d', validators = [DataRequired()])
-    end_date = DateField('End Date',format='%Y-%m-%d', validators = [DataRequired()])
-    generate_pay_stub = SubmitField('Generate Pay Stub')
+    generate_pay_stub = SubmitField('Generate Pay Stubs')
 
 class Add_shift_form(FlaskForm):
     employee_filter = SelectField('Employee', validators = [DataRequired()])
