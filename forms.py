@@ -42,7 +42,7 @@ class PayrollForm(FlaskForm):
     submit = SubmitField('Get Pay Stubs')
 
 class GeneratePayStub(FlaskForm):
-    employee_filter_pay_stub = SelectField('Employee', coerce=str)
+    #employee_filter_pay_stub = SelectField('Employee', coerce=str)
     generate_pay_stub = SubmitField('Generate Pay Stubs')
 
 class Add_shift_form(FlaskForm):
