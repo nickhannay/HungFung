@@ -19,6 +19,9 @@ from selenium.webdriver.support.ui import Select
 
 from shared_functions import *
 
+
+FEDERAL_PDOC = "https://www.canada.ca/en/revenue-agency/services/e-services/e-services-businesses/payroll-deductions-online-calculator.html"
+
 payroll_pages = Blueprint('payroll_pages', __name__)
 
 
@@ -69,6 +72,73 @@ def getGrossPay(cur, employee, department):
 
     return gross_pay
 
+def openWebsite(url):
+    driver = webdriver.Firefox()
+    driver.get(url)
+    return driver
+
+def closeWebsite(driver):
+    driver.close()
+    return
+
+def calculateTax(driver, name, period_gross, frequency):
+    # open tax calculator in browser
+    
+    url = "https://apps.cra-arc.gc.ca/ebci/rhpd/prot/welcome.action?request_locale=en_CA"
+
+    # skip the first 2 pages 
+    driver.find_element_by_xpath('//a[@href="'+url+'"]').click()
+    driver.find_element_by_id('welcome_button_next').click()
+
+    # PAGE 1
+    # name 
+    field_name = driver.find_element_by_name("employeeName")
+    field_name.clear()
+    field_name.send_keys(name)
+
+    # province -> BC
+    prov = Select(driver.find_element_by_name("jurisdiction"))
+    prov.select_by_index(2)
+
+    
+    pay_freq = Select(driver.find_element_by_name("payPeriodFrequency"))
+    if frequency == 'semi-monthly':
+        print(f'{name} is semi-monthly')
+        pay_freq.select_by_value('SEMI_MONTHLY')
+    elif frequency == 'monthly':
+        print(f'{name} is monthly')
+        pay_freq.select_by_value('MONTHLY_12PP')
+    
+
+    #date 
+    Select(driver.find_element_by_name("datePaidDay")).select_by_index(datetime.today().day)
+    Select(driver.find_element_by_name("datePaidMonth")).select_by_index(datetime.today().month)
+    Select(driver.find_element_by_name("datePaidYear")).select_by_index(1)
+    driver.find_element_by_id("payrollDeductionsStep1_button_next").click()
+
+    # PAGE 2
+    # gross income per period
+    gross_income = driver.find_element_by_id("incomeAmount")
+    gross_income.clear()
+    gross_income.send_keys("{:.2f}".format(period_gross))
+    driver.find_element_by_id("payrollDeductionsStep2a_button_next").click()
+    
+    # PAGE 3
+    driver.find_element_by_id("payrollDeductionsStep3_button_calculate").click()
+    
+    # Results Page 
+    fed_tax = driver.find_element_by_xpath("//table/tbody/tr[6]/td[2]").text
+    prov_tax = driver.find_element_by_xpath("//table/tbody/tr[7]/td[2]").text
+    cpp = driver.find_element_by_xpath("//table/tbody/tr[9]/td[3]").text
+    ei = driver.find_element_by_xpath("//table/tbody/tr[10]/td[3]").text
+
+    print(f'----{name}----')
+    print(f'FED: {fed_tax}\nProv: {prov_tax}\nCPP: {cpp} \nEI:  {ei}')
+    print("-"*10)
+
+    driver.find_element_by_id("payrollDeductionsResults_button_nextCalculationButton").click()
+    return
+
         
 @payroll_pages.route('/report/payroll', methods=['GET', 'POST'])
 def payroll():
@@ -90,14 +160,21 @@ def payroll():
     form_display_stubs.employee_filter.choices = [" "] + employees_list
 
     if (form_generate_stubs.is_submitted() & ('generate_pay_stub' in request.form)):
-        
+        driver = openWebsite(FEDERAL_PDOC)
+
         for employee in operations_employees:
            gross_pay = getGrossPay(cur, employee, 'OP')
-
+           pay_frequency = 'semi-monthly'
+           calculateTax(driver, employee['Fname'] + " " + employee['Lname'], gross_pay, pay_frequency)
+        
         # only generate office employees (monthly pay frequency) pay stubs on the last day of the month
         if (TODAYS_DATE[-2:] != '15'):
             for employee in office_employees:
-                getGrossPay(cur, employee, 'OF')
+                gross_pay = getGrossPay(cur, employee, 'OF')
+                pay_frequency = 'monthly'
+                calculateTax(driver, employee['Fname'] + " " + employee['Lname'], gross_pay, pay_frequency)
+
+        closeWebsite(driver)
 
     elif form_display_stubs.validate_on_submit() & ('submit' in request.form):
         # Display pay stubs
@@ -132,78 +209,4 @@ def payroll():
         return render_template('payroll_data.html', stubs = stubs) 
     return render_template('payroll.html', form = form_display_stubs, generate_pay_stub_form = form_generate_stubs)
 
-def navigateTaxSite(website):
-    conn = sqlite3.connect("instance/flaskr.sqlite")
-    conn.row_factory = dict_factory
-    c = conn.cursor()
-    c.execute("PRAGMA foreign_keys=on")
 
-    # open tax calculator in browser
-    driver = webdriver.Firefox()
-    driver.get(website)
-    url = "https://apps.cra-arc.gc.ca/ebci/rhpd/prot/welcome.action?request_locale=en_CA"
-
-    # skip the first 2 pages 
-    driver.find_element_by_xpath('//a[@href="'+url+'"]').click()
-    driver.find_element_by_id('welcome_button_next').click()
-    
-    #calculate info for each employee 
-    c.execute("SELECT Fname, Mname, Lname, ID FROM Employee")
-    employees = c.fetchall()
-    for e in employees:
-        # PAGE 1
-        # name 
-        name = driver.find_element_by_name("employeeName")
-        name.clear()
-        name.send_keys(e['Fname']+" "+e['Lname'])
-
-        # province -> BC
-        prov = Select(driver.find_element_by_name("jurisdiction"))
-        prov.select_by_index(2)
-
-        #pay period frequency -> semi-monthly
-        pay_freq = Select(driver.find_element_by_name("payPeriodFrequency"))
-        pay_freq.select_by_index(4)
-
-        #date 
-        Select(driver.find_element_by_name("datePaidDay")).select_by_index(datetime.today().day)
-        Select(driver.find_element_by_name("datePaidMonth")).select_by_index(datetime.today().month)
-        Select(driver.find_element_by_name("datePaidYear")).select_by_index(1)
-
-        driver.find_element_by_id("payrollDeductionsStep1_button_next").click()
-
-        # PAGE 2
-        # gross income per period
-        ammount = getPeriodIncome(e['ID'], c)
-        gross_income = driver.find_element_by_id("incomeAmount")
-        gross_income.clear()
-        gross_income.send_keys("{:.2f}".format(ammount))
-        driver.find_element_by_id("payrollDeductionsStep2a_button_next").click()
-        
-        # PAGE 3
-        driver.find_element_by_id("payrollDeductionsStep3_button_calculate").click()
-        
-        # Results Page 
-        fed_tax = driver.find_element_by_xpath("//table/tbody/tr[6]/td[2]").text
-        prov_tax = driver.find_element_by_xpath("//table/tbody/tr[7]/td[2]").text
-        CPP = driver.find_element_by_xpath("//table/tbody/tr[9]/td[3]").text
-        EI = driver.find_element_by_xpath("//table/tbody/tr[10]/td[3]").text
-
-        print(e['Fname']+" "+e['Lname'])
-        print("FED: " + fed_tax)
-        print("Prov: " + prov_tax)
-        print("CPP: " + CPP)
-        print("EI: "+ EI)
-        print("-"*30)
-
-        driver.find_element_by_id("payrollDeductionsResults_button_nextCalculationButton").click()
-    
-    driver.close()
-    conn.commit()
-    c.close()
-    return
-
-@payroll_pages.route('/report/tax', methods=['GET', 'POST'])
-def tax():
-    navigateTaxSite("https://www.canada.ca/en/revenue-agency/services/e-services/e-services-businesses/payroll-deductions-online-calculator.html")
-    return render_template('tax.html')
