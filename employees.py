@@ -33,9 +33,7 @@ def add_new_employee():
             # no middle name
             form.employee_middle_name.data = "NULL"
         
-        conn = sqlite3.connect("instance/flaskr.sqlite")
-        c = conn.cursor()
-        c.execute("PRAGMA foreign_keys=on")
+        c, conn = openDatabase()
 
         #use next available ID
         c.execute('''
@@ -85,8 +83,7 @@ def add_new_employee():
         c.execute(query, (format_number, EMPLOYEE_ID) )
 
 
-        conn.commit()
-        c.close()
+        closeDatabase(c, conn)
 
         flash(f'{form.employee_first_name.data} {form.employee_last_name.data}: added to database', 'success')
         return redirect(url_for('employee_pages.add_new_employee'))
@@ -100,10 +97,8 @@ def update_employee_info():
     drop_down_form = update_employee_info_form()
 
     # open database connection
-    conn = sqlite3.connect("instance/flaskr.sqlite")
-    conn.row_factory = dict_factory
-    cur = conn.cursor()
-    cur.execute("PRAGMA foreign_keys=on")
+    cur, conn = openDatabase()
+
     # Populate drop down dynamically
     cur.execute(''' SELECT ID, Fname, Lname FROM Employee''')
     employees = cur.fetchall()
@@ -116,14 +111,12 @@ def update_employee_info():
         fname = drop_down_form.employee_update.data.split(" ")[0]
         lname = drop_down_form.employee_update.data.split(" ")[1]
 
-        conn.commit()
-        cur.close()
+        closeDatabase(cur, conn)
 
         return redirect(url_for('employee_pages.update_fill_out', fname = fname , lname = lname))
             
     
-    conn.commit()
-    cur.close()
+    closeDatabase(cur, conn)
     return render_template('update_employee_info.html',form=drop_down_form)
 
         

@@ -30,7 +30,7 @@ def report():
     return render_template('report.html')
 
 def getGrossPay(cur, employee, department):
-    full_name = employee['Fname'] + employee['Lname']
+    full_name = employee['Fname'] + " " + employee['Lname']
     employee_id = employee['ID']
     if department == 'OP': 
         # Generate stub for operations employee
@@ -73,22 +73,24 @@ def getGrossPay(cur, employee, department):
     return gross_pay
 
 def openWebsite(url):
+    # open url in browser
     driver = webdriver.Firefox()
     driver.get(url)
+
+     # 'I accept' button
+    accept = "https://apps.cra-arc.gc.ca/ebci/rhpd/prot/welcome.action?request_locale=en_CA"
+
+    # skip the first 2 pages 
+    driver.find_element_by_xpath('//a[@href="'+accept+'"]').click()
+    driver.find_element_by_id('welcome_button_next').click()
     return driver
 
 def closeWebsite(driver):
     driver.close()
+    print('website closed')
     return
 
 def calculateTax(driver, name, period_gross, frequency):
-    # open tax calculator in browser
-    
-    url = "https://apps.cra-arc.gc.ca/ebci/rhpd/prot/welcome.action?request_locale=en_CA"
-
-    # skip the first 2 pages 
-    driver.find_element_by_xpath('//a[@href="'+url+'"]').click()
-    driver.find_element_by_id('welcome_button_next').click()
 
     # PAGE 1
     # name 
@@ -100,7 +102,7 @@ def calculateTax(driver, name, period_gross, frequency):
     prov = Select(driver.find_element_by_name("jurisdiction"))
     prov.select_by_index(2)
 
-    
+    # pay frequency
     pay_freq = Select(driver.find_element_by_name("payPeriodFrequency"))
     if frequency == 'semi-monthly':
         print(f'{name} is semi-monthly')
@@ -132,12 +134,12 @@ def calculateTax(driver, name, period_gross, frequency):
     cpp = driver.find_element_by_xpath("//table/tbody/tr[9]/td[3]").text
     ei = driver.find_element_by_xpath("//table/tbody/tr[10]/td[3]").text
 
-    print(f'----{name}----')
+    print(f'----Calculated tax info for {name}----')
     print(f'FED: {fed_tax}\nProv: {prov_tax}\nCPP: {cpp} \nEI:  {ei}')
     print("-"*10)
 
     driver.find_element_by_id("payrollDeductionsResults_button_nextCalculationButton").click()
-    return
+    return fed_tax, prov_tax, cpp, ei
 
         
 @payroll_pages.route('/report/payroll', methods=['GET', 'POST'])
@@ -163,18 +165,29 @@ def payroll():
         driver = openWebsite(FEDERAL_PDOC)
 
         for employee in operations_employees:
-           gross_pay = getGrossPay(cur, employee, 'OP')
-           pay_frequency = 'semi-monthly'
-           calculateTax(driver, employee['Fname'] + " " + employee['Lname'], gross_pay, pay_frequency)
+            gross_pay = getGrossPay(cur, employee, 'OP')
+            name = employee['Fname'] + " " + employee['Lname']
+            if gross_pay > 0 :
+                pay_frequency = 'semi-monthly'
+                calculateTax(driver, name , gross_pay, pay_frequency)
+            else:
+                print(f"failed to calculate {name}'s tax information: Gross pay cannot be $0")
+            
         
         # only generate office employees (monthly pay frequency) pay stubs on the last day of the month
         if (TODAYS_DATE[-2:] != '15'):
             for employee in office_employees:
                 gross_pay = getGrossPay(cur, employee, 'OF')
-                pay_frequency = 'monthly'
-                calculateTax(driver, employee['Fname'] + " " + employee['Lname'], gross_pay, pay_frequency)
-
+                name = employee['Fname'] + " " + employee['Lname']
+                if gross_pay > 0 :
+                    pay_frequency = 'monthly'
+                    calculateTax(driver, name, gross_pay, pay_frequency)
+                else:
+                    print(f"failed to calculate {name}'s tax information: Gross pay cannot be $0")
+               
         closeWebsite(driver)
+        closeDatabase(cur, conn)
+        print ('datbase closed')
 
     elif form_display_stubs.validate_on_submit() & ('submit' in request.form):
         # Display pay stubs
@@ -205,8 +218,11 @@ def payroll():
 
         
         closeDatabase(cur, conn)
-
+        print ('datbase closed')
         return render_template('payroll_data.html', stubs = stubs) 
+    
+    closeDatabase(cur, conn)
+    print ('datbase closed')
     return render_template('payroll.html', form = form_display_stubs, generate_pay_stub_form = form_generate_stubs)
 
 
