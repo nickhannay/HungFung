@@ -28,7 +28,19 @@ def dict_factory(cursor, row):
     for idx, col in enumerate(cursor.description):
         d[col[0]] = row[idx]
     return d
-        
+
+def openDatabase():
+    conn = sqlite3.connect("instance/flaskr.sqlite")
+    conn.row_factory = dict_factory
+    cur = conn.cursor()
+    cur.execute("PRAGMA foreign_keys=on")
+
+    return cur, conn
+
+def closeDatabase(cur, conn):
+    conn.commit()
+    cur.close()
+    return
 
 def getEmployeeID(fname,lname, cur):
     query = ''' SELECT ID FROM Employee
@@ -57,7 +69,7 @@ def getPeriodIncome(Id, wage, start, end , cur):
     if(hours['RegHours'] is not None):
         ammount += hours['RegHours'] * wage
     if(hours['OTHours'] is not None):
-        ammount +=  hours['OTHours'] * (wage + (decimal(wage)/2))
-        print(ammount)
+        ammount +=  hours['OTHours'] * (wage + (wage)/2)
+        print(f'Using ''decimal'': {ammount}')
 
     return ammount

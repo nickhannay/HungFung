@@ -26,22 +26,55 @@ payroll_pages = Blueprint('payroll_pages', __name__)
 def report():
     return render_template('report.html')
 
+def getGrossPay(cur, employee, department):
+    full_name = employee['Fname'] + employee['Lname']
+    employee_id = employee['ID']
+    if department == 'OP': 
+        # Generate stub for operations employee
+        wage = employee['WagePerHour']
+        query = '''SELECT PayrollDate FROM Payroll
+                ORDER BY PayrollDate desc '''
+        cur.execute(query)
+
+        # get the date of the last period to calculate gross income for the period
+        last_period = cur.fetchone()
+        if (last_period is None):
+            last_period = '0000-01-01'
+        else:
+            last_period = last_period['PayrollDate']
+
+        print(f'last period start date {last_period}')
+        # don't include hours worked on the date of the last period
+        cur.execute('''SELECT date(?, '+1 day') as date''',[last_period])
+        last_period = cur.fetchone()['date']
+        print(f'last period start date +1 day {last_period}')
+
+        gross_pay = getPeriodIncome(employee_id, wage, last_period, TODAYS_DATE, cur)
+        print(f'{full_name} gross income for period ({TODAYS_DATE}) : {gross_pay}')
+
+        
+        '''
+        cur.execute("Select MAX(ChequeNumber) From Payroll")
+        new_cheque_number = cur.fetchall()
+        if (new_cheque_number[0]['MAX(ChequeNumber)'] is None):
+            new_cheque_number = 0000000
+        else:
+            new_cheque_number = int(new_cheque_number[0]['MAX(ChequeNumber)'])+1
+        '''
+    elif department == 'OF':
+        # Genrate stubs for office employees aswell
+        salary = employee['Salary']
+        gross_pay = salary/12
+        print(f'{full_name} gross income for period ({TODAYS_DATE}) : ' + "{:.2f}".format(gross_pay))
+
+    return gross_pay
+
         
 @payroll_pages.route('/report/payroll', methods=['GET', 'POST'])
 def payroll():
     global TODAYS_DATE
-
-    if (TODAYS_DATE[-2:] == '15'):
-        # Process only operations employees on the 15th
-        generate_all = False
-    else:
-        generate_all = True
+    cur, conn = openDatabase()
     
-    conn = sqlite3.connect("instance/flaskr.sqlite")
-    conn.row_factory = dict_factory
-    cur = conn.cursor()
-    cur.execute("PRAGMA foreign_keys=on")
-
     # seperate operations and office employees for processing
     cur.execute(''' SELECT E.*, O.WagePerHour FROM Employee E, Operations O
                     WHERE E.ID = O.ID''')
@@ -56,55 +89,17 @@ def payroll():
     form_display_stubs = PayrollForm()
     form_display_stubs.employee_filter.choices = [" "] + employees_list
 
-    print ('Payroll page')
     if (form_generate_stubs.is_submitted() & ('generate_pay_stub' in request.form)):
-
-        # Generate all possible paystubs
+        
         for employee in operations_employees:
-            # Generate stubs for operations employees
-            employee_id = employee['ID']
-            wage = employee['WagePerHour']
-            query = '''SELECT PayrollDate FROM Payroll
-                    ORDER BY PayrollDate desc '''
-            cur.execute(query)
+           gross_pay = getGrossPay(cur, employee, 'OP')
 
-            last_period = cur.fetchone()
-            if (last_period is None):
-                last_period = '0000-01-01'
-            else:
-                last_period = last_period['PayrollDate']
-
-            print(f'last period start date {last_period}')
-            cur.execute('''SELECT date(?, '+1 day') as date''',[last_period])
-            last_period = cur.fetchone()['date']
-            print(f'last period start date +1 day {last_period}')
-
-            grossPay = getPeriodIncome(employee_id, wage, last_period, TODAYS_DATE, cur)
-            print(grossPay)
-            full_name = getName(employee_id, cur)
-            print(f'{full_name} gross income for period ({TODAYS_DATE}) : {grossPay}')
-
-            '''
-            cur.execute("Select MAX(ChequeNumber) From Payroll")
-            new_cheque_number = cur.fetchall()
-            if (new_cheque_number[0]['MAX(ChequeNumber)'] is None):
-                new_cheque_number = 0000000
-            else:
-                new_cheque_number = int(new_cheque_number[0]['MAX(ChequeNumber)'])+1
-            '''
-        if (generate_all):
-            # Genrate stubs for office employees aswell
+        # only generate office employees (monthly pay frequency) pay stubs on the last day of the month
+        if (TODAYS_DATE[-2:] != '15'):
             for employee in office_employees:
-                employee_id = employee['ID']
-                salary = employee['Salary']
-                grossPay = salary/12
-                full_name = getName(employee_id, cur)
-                print(f'{full_name} gross income for period ({TODAYS_DATE}) : {grossPay}')
-
-        flash(f'Pay stubs generated for Pay Period: {TODAYS_DATE}', 'success')
+                getGrossPay(cur, employee, 'OF')
 
     elif form_display_stubs.validate_on_submit() & ('submit' in request.form):
-        print('Show stubs')
         # Display pay stubs
         fname = form_display_stubs.employee_filter.data.split(" ")[0]
         lname = form_display_stubs.employee_filter.data.split(" ")[1]
@@ -132,8 +127,7 @@ def payroll():
         stubs = cur.fetchall()
 
         
-        conn.commit()
-        cur.close()
+        closeDatabase(cur, conn)
 
         return render_template('payroll_data.html', stubs = stubs) 
     return render_template('payroll.html', form = form_display_stubs, generate_pay_stub_form = form_generate_stubs)
