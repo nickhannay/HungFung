@@ -2,7 +2,7 @@
 {% block content %}
 
 <form method="POST" action="" >
-        {{ form.hidden_tag() }}
+        {{ form_display_stubs.hidden_tag() }}
         <fieldset class="form-group">
         </fieldset>
 
@@ -10,50 +10,50 @@
 
                 <!-- Employee Dropdown  -->
                 <div class="form-group col-md-3">
-                        {{ form.employee_filter.label(class="form-control-label") }}
+                        {{ form_display_stubs.employee_filter.label(class="form-control-label") }}
                   
-                        {% if form.employee_filter.errors %}
-                        {{ form.employee_filter(class="form-control form-control-sm is-invalid") }}
+                        {% if form_display_stubs.employee_filter.errors %}
+                        {{ form_display_stubs.employee_filter(class="form-control form-control-sm is-invalid") }}
                         <div class="invalid-feedback">
-                          {% for error in form.employee_filter.errors %}
+                          {% for error in form_display_stubs.employee_filter.errors %}
                           <span>{{ error }}</span>
                           {% endfor %}
                         </div>
                         {% else %}
-                        {{ form.employee_filter(class="form-control form-control-sm") }}
+                        {{ form_display_stubs.employee_filter(class="form-control form-control-sm") }}
                         {% endif %}
                 </div>
         
                 <div class="form-group col-md-3">
-                        {{ form.payroll_date_range.label(class="form-control-label") }}
+                        {{ form_display_stubs.payroll_date_range.label(class="form-control-label") }}
                   
-                        {% if form.payroll_date_range.errors %}
-                        {{ form.payroll_date_range(class="form-control form-control-sm is-invalid") }}
+                        {% if form_display_stubs.payroll_date_range.errors %}
+                        {{ form_display_stubs.payroll_date_range(class="form-control form-control-sm is-invalid") }}
                         <div class="invalid-feedback">
-                          {% for error in form.payroll_date_range.errors %}
+                          {% for error in form_display_stubs.payroll_date_range.errors %}
                           <span>{{ error }}</span>
                           {% endfor %}
                         </div>
                         {% else %}
-                        {{ form.payroll_date_range(class="form-control form-control-sm") }}
+                        {{ form_display_stubs.payroll_date_range(class="form-control form-control-sm") }}
                         {% endif %}
                 </div>
                 
         </div>
         <div class="form-group">
-                {{ form.submit(class="btn btn-outline-info") }}
+                {{ form_display_stubs.display_pay_stubs(class="btn btn-outline-info") }}
         </div>
 
 </form>
 
 <form method="POST" action="" >
-        {{ generate_pay_stub_form.hidden_tag() }}
+        {{ form_generate_stubs.hidden_tag() }}
         <fieldset class="form-group">
         </fieldset>
 
         
         <div class="form-group">
-                {{ generate_pay_stub_form.generate_pay_stub(class="btn btn-outline-info") }}
+                {{ form_generate_stubs.generate_pay_stubs(class="btn btn-outline-info") }}
         </div>
                 
         

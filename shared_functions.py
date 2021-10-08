@@ -34,20 +34,24 @@ def openDatabase():
     conn.row_factory = dict_factory
     cur = conn.cursor()
     cur.execute("PRAGMA foreign_keys=on")
-
+    print('Database opened')
     return cur, conn
 
 def closeDatabase(cur, conn):
     conn.commit()
     cur.close()
+    print ('database closed')
     return
 
 def getEmployeeID(fname,lname, cur):
     query = ''' SELECT ID FROM Employee
                 WHERE Fname = ? AND Lname = ?''' 
     cur.execute(query,(fname,lname))
-    employee_id = cur.fetchall()[0]['ID']
-    return employee_id
+    employee_id = cur.fetchone()
+    if employee_id is None:
+        return -1
+    else:
+        return employee_id['ID']
 
 def getName(id , cur):
     cur.execute('''SELECT Fname, Lname FROM Employee E WHERE E.ID = ?''', (id))
